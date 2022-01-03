@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList } from 'react-native';
+import { Alert, FlatList } from 'react-native';
 import storage from '@react-native-firebase/storage';
 
 import { Container, PhotoInfo } from './styles';
@@ -10,7 +10,7 @@ import { File, FileProps } from '../../components/File';
 export function Receipts() {
   const [photos, setPhotos] = useState<FileProps[]>([]);
   const [photoSelected, setPhotoSelected] = useState('');
-  const [photoInfo, setPhotoInfo] = useState('';)
+  const [photoInfo, setPhotoInfo] = useState('');
 
   async function handleShowImage(path: string){
     const urlImage = await storage().ref(path).getDownloadURL();
@@ -21,20 +21,36 @@ export function Receipts() {
     setPhotoInfo(`Upload realizado em ${info.timeCreated}`)
   }
 
-  useEffect(() => {
-    storage().ref('images').list().then(result => {
-      const files: FileProps[] = [];
-
-      result.items.forEach(file => {
-        files.push({
-          name: file.name,
-          path: file.fullPath
-        });
-      });
-
-      setPhotos(files);
-    });
+  async function handleDeleteImage(path: string){
+    storage().ref(path).delete()
+    .then(() => { 
+      Alert.alert('Imagem excluída com sucesso!'); 
+      fetchImages();
   })
+    .catch(error => console.error(error));
+  }
+
+  async function fetchImages(){
+    storage()
+      .ref("images")
+      .list()
+      .then((result) => {
+        const files: FileProps[] = [];
+
+        result.items.forEach((file) => {
+          files.push({
+            name: file.name,
+            path: file.fullPath,
+          });
+        });
+
+        setPhotos(files);
+      });
+  }
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
 
   return (
     <Container>
@@ -53,7 +69,7 @@ export function Receipts() {
           <File
             data={item}
             onShow={() => handleShowImage(item.path)}
-            onDelete={() => { }}
+            onDelete={() => handleDeleteImage(item.path)}
           />
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
