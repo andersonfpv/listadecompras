@@ -9,6 +9,13 @@ import { File, FileProps } from '../../components/File';
 
 export function Receipts() {
   const [photos, setPhotos] = useState<FileProps[]>([]);
+  const [photoSelected, setPhotoSelected] = useState('');
+
+  async function handleShowImage(path: string){
+    const urlImage = await storage().ref(path).getDownloadURL();
+    
+    setPhotoSelected(urlImage);
+  }
 
   useEffect(() => {
     storage().ref('images').list().then(result => {
@@ -29,7 +36,7 @@ export function Receipts() {
     <Container>
       <Header title="Comprovantes" />
 
-      <Photo uri="" />
+      <Photo uri={photoSelected} />
 
       <PhotoInfo>
         Informações da foto
@@ -41,7 +48,7 @@ export function Receipts() {
         renderItem={({ item }) => (
           <File
             data={item}
-            onShow={() => { }}
+            onShow={() => handleShowImage(item.path)}
             onDelete={() => { }}
           />
         )}
